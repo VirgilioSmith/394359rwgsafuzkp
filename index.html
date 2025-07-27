@@ -217,6 +217,46 @@
             transform: scale(1);
             opacity: 0.5;
         }
+        .fab-button .fab-tooltip {
+            position: absolute;
+            right: 120%;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: var(--accent-neon-blue);
+            color: #05070B;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            pointer-events: none;
+        }
+        .fab-button:hover .fab-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+        .fab-logo {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            width: 4rem;
+            height: 4rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--card-color);
+            color: var(--accent-neon-blue);
+            border: 1px solid var(--border-color);
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            box-shadow: 0 0 25px rgba(var(--accent-neon-blue-rgb), 0.3);
+            z-index: 999;
+        }
 
         /* Estilo para el interruptor moderno */
         .toggle-switch {
@@ -368,9 +408,15 @@
         </div>
     </div>
 
+    <!-- LOGO FLOTANTE -->
+    <div class="fab-logo">
+        <span>Metrix</span>
+    </div>
+
     <!-- BOTÓN FLOTANTE PARA RESUMEN -->
     <button id="execSummaryBtn" class="fab-button">
-        <i data-lucide="bar-chart-3"></i>
+        <i data-lucide="file-text"></i>
+        <span class="fab-tooltip">Resumen Ejecutivo</span>
     </button>
 
     <!-- VENTANA MODAL PARA RESUMEN EJECUTIVO -->
