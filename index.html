@@ -188,10 +188,16 @@
         }
         .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
         
-        .fab-button {
+        .fab-container {
             position: fixed;
             bottom: 2rem;
             right: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            z-index: 999;
+        }
+        .fab-button {
             width: 4rem;
             height: 4rem;
             border-radius: 50%;
@@ -202,11 +208,10 @@
             color: #05070B;
             box-shadow: 0 0 25px rgba(var(--accent-neon-blue-rgb), 0.5);
             transition: all 0.3s ease;
-            z-index: 999;
             border: none;
             cursor: pointer;
         }
-        .fab-button:hover {
+        .fab-container:hover .fab-button {
             transform: scale(1.1);
             box-shadow: 0 0 35px rgba(var(--accent-neon-blue-rgb), 0.7);
         }
@@ -217,11 +222,7 @@
             transform: scale(1);
             opacity: 0.5;
         }
-        .fab-button .fab-tooltip {
-            position: absolute;
-            right: 120%;
-            top: 50%;
-            transform: translateY(-50%);
+        .fab-label {
             background-color: var(--accent-neon-blue);
             color: #05070B;
             padding: 0.5rem 1rem;
@@ -230,31 +231,25 @@
             font-weight: 600;
             white-space: nowrap;
             opacity: 0;
+            transform: translateX(10px);
             visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            transition: all 0.3s ease;
             pointer-events: none;
         }
-        .fab-button:hover .fab-tooltip {
+        .fab-container:hover .fab-label {
             opacity: 1;
             visibility: visible;
+            transform: translateX(0);
         }
         .fab-logo {
             position: fixed;
             bottom: 2rem;
             left: 2rem;
-            width: 4rem;
-            height: 4rem;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--card-color);
             color: var(--accent-neon-blue);
-            border: 1px solid var(--border-color);
             font-family: 'Orbitron', sans-serif;
             font-weight: 700;
-            font-size: 0.9rem;
-            box-shadow: 0 0 25px rgba(var(--accent-neon-blue-rgb), 0.3);
+            font-size: 1.5rem;
+            text-shadow: 0 0 15px rgba(var(--accent-neon-blue-rgb), 0.5);
             z-index: 999;
         }
 
@@ -338,25 +333,25 @@
                 <h2 class="text-2xl font-bold mb-6" style="font-family: 'Orbitron', sans-serif;">Paso 1: Datos del Pedido</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div class="input-group"><label for="productName">Producto</label><div class="input-wrapper"><input type="text" id="productName" value="" placeholder="Ej: Relojes Casio"><i data-lucide="package" class="icon"></i></div></div>
-                    <div class="input-group"><label for="totalUnits">Unidades</label><div class="input-wrapper"><input type="number" id="totalUnits" value="" placeholder="Ej: 8"><i data-lucide="hash" class="icon"></i></div></div>
-                    <div class="input-group"><label for="salePrice">Precio Venta (DOP)</label><div class="input-wrapper"><input type="number" id="salePrice" value="" placeholder="Ej: 2000"><i data-lucide="dollar-sign" class="icon"></i></div></div>
+                    <div class="input-group"><label for="totalUnits">Unidades</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="totalUnits" value="" placeholder="Ej: 8"><i data-lucide="hash" class="icon"></i></div></div>
+                    <div class="input-group"><label for="salePrice">Precio Venta (DOP)</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="salePrice" value="" placeholder="Ej: 2.000"><i data-lucide="dollar-sign" class="icon"></i></div></div>
                 </div>
             </div>
             
             <div id="step-2" class="step hidden">
                  <h2 class="text-2xl font-bold my-6" style="font-family: 'Orbitron', sans-serif;">Paso 2: Gastos del Pedido</h2>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                    <div class="input-group"><label for="totalOrderCostDOP">Costo Total Pedido</label><div class="input-wrapper"><input type="number" id="totalOrderCostDOP" value="" placeholder="Ej: 5190"><i data-lucide="receipt" class="icon"></i></div></div>
-                    <div class="input-group"><label for="courierCost">Courier</label><div class="input-wrapper"><input type="number" id="courierCost" value="" placeholder="Ej: 1000"><i data-lucide="truck" class="icon"></i></div></div>
-                    <div class="input-group"><label for="transportCostUnit">Transporte / Unid.</label><div class="input-wrapper"><input type="number" id="transportCostUnit" value="0" placeholder="Ej: 10"><i data-lucide="navigation" class="icon"></i></div></div>
-                    <div class="input-group"><label for="marketingPercentage">Marketing (%)</label><div class="input-wrapper"><input type="number" id="marketingPercentage" value="0" placeholder="Ej: 4"><i data-lucide="megaphone" class="icon"></i></div></div>
+                    <div class="input-group"><label for="totalOrderCostDOP">Costo Total Pedido</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="totalOrderCostDOP" value="" placeholder="Ej: 5.190"><i data-lucide="receipt" class="icon"></i></div></div>
+                    <div class="input-group"><label for="courierCost">Courier</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="courierCost" value="" placeholder="Ej: 1.000"><i data-lucide="truck" class="icon"></i></div></div>
+                    <div class="input-group"><label for="transportCostUnit">Transporte / Unid.</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="transportCostUnit" value="0" placeholder="Ej: 10"><i data-lucide="navigation" class="icon"></i></div></div>
+                    <div class="input-group"><label for="marketingPercentage">Marketing (%)</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="marketingPercentage" value="0" placeholder="Ej: 4"><i data-lucide="megaphone" class="icon"></i></div></div>
                 </div>
             </div>
 
             <div id="step-3" class="step hidden">
                 <h2 class="text-2xl font-bold my-6" style="font-family: 'Orbitron', sans-serif;">Paso 3: Meta y Simulación</h2>
                  <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="input-group"><label for="targetRevenue">Meta de Ingresos</label><div class="input-wrapper"><input type="number" id="targetRevenue" value="" placeholder="Ej: 500000"><i data-lucide="target" class="icon"></i></div></div>
+                    <div class="input-group"><label for="targetRevenue">Meta de Ingresos</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="targetRevenue" value="" placeholder="Ej: 500.000"><i data-lucide="target" class="icon"></i></div></div>
                 </div>
             </div>
         </div>
@@ -414,10 +409,12 @@
     </div>
 
     <!-- BOTÓN FLOTANTE PARA RESUMEN -->
-    <button id="execSummaryBtn" class="fab-button">
-        <i data-lucide="file-text"></i>
-        <span class="fab-tooltip">Resumen Ejecutivo</span>
-    </button>
+    <div class="fab-container">
+        <span class="fab-label">Resumen Ejecutivo</span>
+        <button id="execSummaryBtn" class="fab-button">
+            <i data-lucide="file-text"></i>
+        </button>
+    </div>
 
     <!-- VENTANA MODAL PARA RESUMEN EJECUTIVO -->
     <div id="summaryModal" class="modal-overlay">
@@ -435,18 +432,23 @@
         const formatNumber = (value, digits = 2) => new Intl.NumberFormat('de-DE', { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(isNaN(value) || !isFinite(value) ? 0 : value);
         let calculatedData = {};
 
+        const deformatNumber = (value) => {
+            if (typeof value !== 'string') return value;
+            return value.replace(/\./g, '').replace(/,/g, '.');
+        };
+
         function calculate() {
             const inputs = {
-                totalUnits: parseInt(document.getElementById('totalUnits').value) || 0,
-                salePrice: parseFloat(document.getElementById('salePrice').value.replace(',', '.')) || 0,
-                totalOrderCostDOP: parseFloat(document.getElementById('totalOrderCostDOP').value.replace(',', '.')) || 0,
-                courierCost: parseFloat(document.getElementById('courierCost').value.replace(',', '.')) || 0,
-                transportCostUnit: parseFloat(document.getElementById('transportCostUnit').value.replace(',', '.')) || 0,
-                marketingPercentage: parseFloat(document.getElementById('marketingPercentage').value.replace(',', '.')) || 0,
-                targetRevenue: parseFloat(document.getElementById('targetRevenue').value.replace(',', '.')) || 0,
+                totalUnits: parseInt(deformatNumber(document.getElementById('totalUnits').value)) || 0,
+                salePrice: parseFloat(deformatNumber(document.getElementById('salePrice').value)) || 0,
+                totalOrderCostDOP: parseFloat(deformatNumber(document.getElementById('totalOrderCostDOP').value)) || 0,
+                courierCost: parseFloat(deformatNumber(document.getElementById('courierCost').value)) || 0,
+                transportCostUnit: parseFloat(deformatNumber(document.getElementById('transportCostUnit').value)) || 0,
+                marketingPercentage: parseFloat(deformatNumber(document.getElementById('marketingPercentage').value)) || 0,
+                targetRevenue: parseFloat(deformatNumber(document.getElementById('targetRevenue').value)) || 0,
                 productName: document.getElementById('productName').value,
-                priceVariation: parseFloat(document.getElementById('priceVariationInput')?.value.replace(',', '.')) || 0,
-                costVariation: parseFloat(document.getElementById('costVariationInput')?.value.replace(',', '.')) || 0,
+                priceVariation: parseFloat(document.getElementById('priceVariationInput')?.value) || 0,
+                costVariation: parseFloat(document.getElementById('costVariationInput')?.value) || 0,
             };
             
             manageSteps(inputs);
@@ -739,12 +741,16 @@
             doc.setFont("helvetica", "bold");
             doc.setFontSize(20);
             doc.setTextColor(40, 40, 40);
-            doc.text(`Resumen de Rentabilidad: ${d.productName}`, 14, 22);
+            doc.text(`Resumen Gerencial`, 105, 22, { align: 'center' });
 
-            doc.setFontSize(10);
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
             doc.setTextColor(100, 100, 100);
-            doc.text(`Reporte generado el: ${new Date().toLocaleDateString('es-ES')}`, 14, 28);
+            doc.text(`Análisis de Rentabilidad para: ${d.productName}`, 105, 30, { align: 'center' });
             
+            doc.setDrawColor(200, 200, 200);
+            doc.line(14, 35, 196, 35);
+
             const summaryData = [
                 ["Ingresos Totales", formatCurrency(d.totalSalesDOP)],
                 ["Costos Totales", formatCurrency(d.totalCostsDOP)],
@@ -761,7 +767,7 @@
             const bodyStyles = { minCellHeight: 10, valign: 'middle' };
 
             doc.autoTable({
-                startY: 40, head: [["Resumen General del Pedido", "Valor"]], body: summaryData,
+                startY: 45, head: [["Resumen General del Pedido", "Valor"]], body: summaryData,
                 headStyles: headStyles, bodyStyles: bodyStyles, theme: 'grid'
             });
             doc.autoTable({
@@ -769,7 +775,11 @@
                 headStyles: headStyles, bodyStyles: bodyStyles, theme: 'grid'
             });
 
-            doc.save(`Metrix_Resumen_${d.productName.replace(/ /g, '_')}.pdf`);
+            doc.setFontSize(8);
+            doc.setTextColor(150);
+            doc.text('© Metrix', 105, 290, { align: 'center' });
+
+            doc.save(`Metrix_Resumen_Gerencial_${d.productName.replace(/ /g, '_')}.pdf`);
         }
 
         function exportXLSX() {
@@ -836,6 +846,8 @@
             } else {
                  step2.classList.add('hidden'); 
                  step3.classList.add('hidden');
+                 progressBar.style.width = '0%'; 
+                 progressText.textContent = 'Esperando Datos';
                  return;
             }
 
@@ -921,6 +933,39 @@
             calculate();
             setupAnimations();
             lucide.createIcons();
+
+            function formatInputAsNumber(event) {
+                const input = event.target;
+                let value = input.value;
+                const cursorPosition = input.selectionStart;
+                const originalLength = value.length;
+                
+                let numericValue = value.replace(/[^0-9]/g, '');
+                
+                if (numericValue === '') {
+                    input.value = '';
+                    return;
+                }
+
+                const formattedValue = new Intl.NumberFormat('en-US').format(numericValue);
+                
+                if (value !== formattedValue) {
+                    input.value = formattedValue;
+                    const newLength = formattedValue.length;
+                    const diff = newLength - originalLength;
+                    const newCursorPosition = cursorPosition + diff > 0 ? cursorPosition + diff : 0;
+                    input.setSelectionRange(newCursorPosition, newCursorPosition);
+                }
+            }
+
+            const inputsToFormat = ['totalUnits', 'salePrice', 'totalOrderCostDOP', 'courierCost', 'transportCostUnit', 'targetRevenue'];
+            inputsToFormat.forEach(id => {
+                const inputElement = document.getElementById(id);
+                if (inputElement) {
+                    inputElement.addEventListener('input', formatInputAsNumber);
+                }
+            });
+
             document.querySelectorAll('#input-section input').forEach(input => input.addEventListener('input', calculate));
             
             const modal = document.getElementById('summaryModal');
