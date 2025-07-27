@@ -243,15 +243,14 @@
         }
         .fab-logo {
             position: fixed;
-            bottom: 2.5rem;
-            left: 2.5rem;
+            bottom: 2rem;
+            left: 2rem;
             color: var(--accent-neon-blue);
             font-family: 'Orbitron', sans-serif;
             font-weight: 700;
-            font-size: 1.2rem;
+            font-size: 1.5rem;
             text-shadow: 0 0 15px rgba(var(--accent-neon-blue-rgb), 0.5);
             z-index: 999;
-            pointer-events: none;
         }
 
         /* Estilo para el interruptor moderno */
@@ -297,6 +296,13 @@
         .toggle-switch input:checked + .slider:before {
             transform: translateX(22px);
         }
+        
+        /* Estilos para KPIs con barras */
+        .kpi-bar-bg { flex-grow: 1; background-color: rgba(var(--accent-neon-blue-rgb), 0.1); border-radius: 3px; height: 6px; margin-top: 0.5rem; }
+        .kpi-bar { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        .kpi-bar.gold { background: var(--accent-gold); }
+        .kpi-bar.red { background: var(--accent-red); }
+        .kpi-bar.emerald { background: var(--accent-emerald); }
     </style>
 </head>
 <body class="p-4 md:p-6 lg:p-8">
@@ -335,8 +341,8 @@
             <div id="step-2" class="step hidden">
                  <h2 class="text-2xl font-bold my-6" style="font-family: 'Orbitron', sans-serif;">Paso 2: Gastos del Pedido</h2>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                    <div class="input-group"><label for="totalOrderCostDOP">Costo Total Producto</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="totalOrderCostDOP" value="" placeholder="Ej: 5.190"><i data-lucide="receipt" class="icon"></i></div></div>
-                    <div class="input-group"><label for="courierCost">Costo Total Courier</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="courierCost" value="" placeholder="Ej: 1.000"><i data-lucide="truck" class="icon"></i></div></div>
+                    <div class="input-group"><label for="totalOrderCostDOP">Costo Total Pedido</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="totalOrderCostDOP" value="" placeholder="Ej: 5.190"><i data-lucide="receipt" class="icon"></i></div></div>
+                    <div class="input-group"><label for="courierCost">Courier</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="courierCost" value="" placeholder="Ej: 1.000"><i data-lucide="truck" class="icon"></i></div></div>
                     <div class="input-group"><label for="transportCostUnit">Transporte / Unid.</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="transportCostUnit" value="0" placeholder="Ej: 10"><i data-lucide="navigation" class="icon"></i></div></div>
                     <div class="input-group"><label for="marketingPercentage">Marketing (%)</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="marketingPercentage" value="0" placeholder="Ej: 4"><i data-lucide="megaphone" class="icon"></i></div></div>
                 </div>
@@ -528,19 +534,20 @@
         function renderKPIs() {
             const { totalSalesDOP, totalCostsDOP, totalNetProfitDOP, totalGrossMarginPercentage, netMarginTotalPercentage } = calculatedData;
             
-            const createKpiCard = (id, label, value) => {
+            const createKpiCard = (id, label, value, barPercent, barColorClass) => {
                 const kpiCard = document.getElementById(id);
                 kpiCard.innerHTML = `
                     <p class="metric-label">${label}</p>
                     <p class="metric-value text-2xl my-1">${value}</p>
+                    <div class="kpi-bar-bg"><div class="kpi-bar ${barColorClass}" style="width: ${barPercent}%"></div></div>
                 `;
             };
 
-            createKpiCard('kpi-sales', 'Ventas Totales', formatCurrency(totalSalesDOP));
-            createKpiCard('kpi-costs', 'Costos Totales', formatCurrency(totalCostsDOP));
-            createKpiCard('kpi-profit', 'Beneficio Neto', formatCurrency(totalNetProfitDOP));
-            createKpiCard('kpi-gross-margin', 'Margen Bruto', `${formatNumber(totalGrossMarginPercentage, 2)}%`);
-            createKpiCard('kpi-net-margin', 'Margen Neto', `${formatNumber(netMarginTotalPercentage, 2)}%`);
+            createKpiCard('kpi-sales', 'Ventas Totales', formatCurrency(totalSalesDOP), 100, 'gold');
+            createKpiCard('kpi-costs', 'Costos Totales', formatCurrency(totalCostsDOP), (totalCostsDOP/totalSalesDOP)*100, 'red');
+            createKpiCard('kpi-profit', 'Beneficio Neto', formatCurrency(totalNetProfitDOP), (totalNetProfitDOP/totalSalesDOP)*100, 'emerald');
+            createKpiCard('kpi-gross-margin', 'Margen Bruto', `${formatNumber(totalGrossMarginPercentage, 2)}%`, totalGrossMarginPercentage, 'gold');
+            createKpiCard('kpi-net-margin', 'Margen Neto', `${formatNumber(netMarginTotalPercentage, 2)}%`, netMarginTotalPercentage, 'emerald');
             
             document.getElementById('kpi-profit').querySelector('.metric-value').className = `metric-value text-2xl my-1 ${totalNetProfitDOP >= 0 ? 'positive' : 'negative'}`;
             document.getElementById('kpi-net-margin').querySelector('.metric-value').className = `metric-value text-2xl my-1 ${netMarginTotalPercentage >= 0 ? 'positive' : 'negative'}`;
@@ -737,7 +744,6 @@
             const doc = new jsPDF();
             const d = calculatedData;
 
-            // --- PÁGINA 1: RESUMEN GERENCIAL ---
             doc.setFont("helvetica", "bold");
             doc.setFontSize(20);
             doc.setTextColor(40, 40, 40);
@@ -772,45 +778,6 @@
             });
             doc.autoTable({
                 startY: doc.lastAutoTable.finalY + 10, head: [["Indicadores Clave de Rentabilidad", "Valor"]], body: kpiData,
-                headStyles: headStyles, bodyStyles: bodyStyles, theme: 'grid'
-            });
-
-            doc.setFontSize(8);
-            doc.setTextColor(150);
-            doc.text('© Metrix', 105, 290, { align: 'center' });
-
-            // --- PÁGINA 2: ANÁLISIS FINANCIERO COMPLETO ---
-            doc.addPage();
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(20);
-            doc.setTextColor(40, 40, 40);
-            doc.text(`Análisis Financiero Completo`, 105, 22, { align: 'center' });
-            doc.line(14, 28, 196, 28);
-
-            const orderAnalysisData = [
-                ["Ingresos Totales (Venta)", formatCurrency(d.totalSalesDOP), formatCurrency(d.salePrice)],
-                ["Costo Neto Total", formatCurrency(d.totalCostsDOP), formatCurrency(d.netCostUnit)],
-                ["  C. Producto", formatCurrency(d.totalOrderCostDOP), formatCurrency(d.productCostUnit)],
-                ["  C. Courier", formatCurrency(d.courierCost), formatCurrency(d.courierCostUnit)],
-                ["  C. Transporte", formatCurrency(d.totalTransportCost), formatCurrency(d.transportCostUnit)],
-                ["  C. Marketing", formatCurrency(d.marketingCostDOP), formatCurrency(d.marketingCostUnit)],
-                ["Beneficio Neto Total", formatCurrency(d.totalNetProfitDOP), formatCurrency(d.netProfitUnit)],
-            ];
-            
-            const pacePeriods = [
-                { label: '7 días', days: 7 }, { label: '1 mes', days: 30 },
-                { label: '3 meses', days: 90 }, { label: '6 meses', days: 180 },
-                { label: '9 meses', days: 270 }, { label: '12 meses', days: 365 }
-            ];
-            const salesPaceData = pacePeriods.map(p => [ `Vender en ${p.label}`, `${formatNumber(d.totalUnits / p.days)} Unid./Día`]);
-
-            doc.autoTable({
-                startY: 35, head: [["Concepto", "Total", "Por Unidad"]], body: orderAnalysisData,
-                headStyles: headStyles, bodyStyles: bodyStyles, theme: 'grid'
-            });
-            
-            doc.autoTable({
-                startY: doc.lastAutoTable.finalY + 10, head: [["Ritmo de Venta Requerido", "Unidades Diarias"]], body: salesPaceData,
                 headStyles: headStyles, bodyStyles: bodyStyles, theme: 'grid'
             });
 
@@ -976,20 +943,23 @@
             function formatInputAsNumber(event) {
                 const input = event.target;
                 let value = input.value;
-                let cursorPosition = input.selectionStart;
-
-                const originalValue = value;
+                const cursorPosition = input.selectionStart;
                 const originalLength = value.length;
-
-                let numericValue = value.replace(/[^0-9]/g, '');
+                
+                let numericValue = value.replace(/[^0-9,]/g, '').replace(/,/g, '.');
                 
                 if (numericValue === '') {
                     input.value = '';
-                    calculate();
                     return;
                 }
 
-                const formattedValue = new Intl.NumberFormat('de-DE').format(numericValue);
+                const parts = numericValue.split('.');
+                let integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                
+                let formattedValue = integerPart;
+                if (parts.length > 1) {
+                    formattedValue += ',' + parts[1];
+                }
                 
                 if (value !== formattedValue) {
                     input.value = formattedValue;
@@ -1004,14 +974,11 @@
             inputsToFormat.forEach(id => {
                 const inputElement = document.getElementById(id);
                 if (inputElement) {
-                    inputElement.addEventListener('input', (e) => {
-                        formatInputAsNumber(e);
-                        calculate();
-                    });
+                    inputElement.addEventListener('input', formatInputAsNumber);
                 }
             });
 
-            document.querySelectorAll('#input-section input[type="text"]:not([inputmode="numeric"])').forEach(input => input.addEventListener('input', calculate));
+            document.querySelectorAll('#input-section input').forEach(input => input.addEventListener('input', calculate));
             
             const modal = document.getElementById('summaryModal');
             document.getElementById('execSummaryBtn').addEventListener('click', generateExecutiveSummary);
