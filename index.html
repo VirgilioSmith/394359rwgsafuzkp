@@ -243,14 +243,15 @@
         }
         .fab-logo {
             position: fixed;
-            bottom: 2rem;
-            left: 2rem;
+            bottom: 2.5rem;
+            left: 2.5rem;
             color: var(--accent-neon-blue);
             font-family: 'Orbitron', sans-serif;
             font-weight: 700;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             text-shadow: 0 0 15px rgba(var(--accent-neon-blue-rgb), 0.5);
             z-index: 999;
+            pointer-events: none;
         }
 
         /* Estilo para el interruptor moderno */
@@ -744,6 +745,7 @@
             const doc = new jsPDF();
             const d = calculatedData;
 
+            // --- PÁGINA 1: RESUMEN GERENCIAL ---
             doc.setFont("helvetica", "bold");
             doc.setFontSize(20);
             doc.setTextColor(40, 40, 40);
@@ -778,6 +780,45 @@
             });
             doc.autoTable({
                 startY: doc.lastAutoTable.finalY + 10, head: [["Indicadores Clave de Rentabilidad", "Valor"]], body: kpiData,
+                headStyles: headStyles, bodyStyles: bodyStyles, theme: 'grid'
+            });
+
+            doc.setFontSize(8);
+            doc.setTextColor(150);
+            doc.text('© Metrix', 105, 290, { align: 'center' });
+
+            // --- PÁGINA 2: ANÁLISIS FINANCIERO COMPLETO ---
+            doc.addPage();
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(20);
+            doc.setTextColor(40, 40, 40);
+            doc.text(`Análisis Financiero Completo`, 105, 22, { align: 'center' });
+            doc.line(14, 28, 196, 28);
+
+            const orderAnalysisData = [
+                ["Ingresos Totales (Venta)", formatCurrency(d.totalSalesDOP), formatCurrency(d.salePrice)],
+                ["Costo Neto Total", formatCurrency(d.totalCostsDOP), formatCurrency(d.netCostUnit)],
+                ["  C. Producto", formatCurrency(d.totalOrderCostDOP), formatCurrency(d.productCostUnit)],
+                ["  C. Courier", formatCurrency(d.courierCost), formatCurrency(d.courierCostUnit)],
+                ["  C. Transporte", formatCurrency(d.totalTransportCost), formatCurrency(d.transportCostUnit)],
+                ["  C. Marketing", formatCurrency(d.marketingCostDOP), formatCurrency(d.marketingCostUnit)],
+                ["Beneficio Neto Total", formatCurrency(d.totalNetProfitDOP), formatCurrency(d.netProfitUnit)],
+            ];
+            
+            const pacePeriods = [
+                { label: '7 días', days: 7 }, { label: '1 mes', days: 30 },
+                { label: '3 meses', days: 90 }, { label: '6 meses', days: 180 },
+                { label: '9 meses', days: 270 }, { label: '12 meses', days: 365 }
+            ];
+            const salesPaceData = pacePeriods.map(p => [ `Vender en ${p.label}`, `${formatNumber(d.totalUnits / p.days)} Unid./Día`]);
+
+            doc.autoTable({
+                startY: 35, head: [["Concepto", "Total", "Por Unidad"]], body: orderAnalysisData,
+                headStyles: headStyles, bodyStyles: bodyStyles, theme: 'grid'
+            });
+            
+            doc.autoTable({
+                startY: doc.lastAutoTable.finalY + 10, head: [["Ritmo de Venta Requerido", "Unidades Diarias"]], body: salesPaceData,
                 headStyles: headStyles, bodyStyles: bodyStyles, theme: 'grid'
             });
 
