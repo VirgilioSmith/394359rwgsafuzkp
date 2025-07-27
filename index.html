@@ -385,27 +385,26 @@
         // ===================================================================================
         // --- BLOQUE DE LÓGICA DE CÁLCULO (NÚCLEO FUNCIONAL) ---
         // ===================================================================================
-        // Nota: Se utiliza el locale 'es-ES' para el formato de moneda, ya que coincide con el formato de separador decimal de coma (,) y de miles de punto (.) solicitado.
-        const formatCurrency = (value) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'DOP', minimumFractionDigits: 2 }).format(isNaN(value) || !isFinite(value) ? 0 : value);
-        const formatNumber = (value, digits = 2) => new Intl.NumberFormat('es-ES', { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(isNaN(value) || !isFinite(value) ? 0 : value);
+        const formatCurrency = (value) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'DOP', minimumFractionDigits: 2 }).format(isNaN(value) || !isFinite(value) ? 0 : value);
+        const formatNumber = (value, digits = 2) => new Intl.NumberFormat('de-DE', { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(isNaN(value) || !isFinite(value) ? 0 : value);
         let calculatedData = {};
 
         function calculate() {
             const inputs = {
                 totalUnits: parseInt(document.getElementById('totalUnits').value) || 0,
-                salePrice: parseFloat(document.getElementById('salePrice').value) || 0,
-                totalOrderCostDOP: parseFloat(document.getElementById('totalOrderCostDOP').value) || 0,
-                courierCost: parseFloat(document.getElementById('courierCost').value) || 0,
-                transportCostUnit: parseFloat(document.getElementById('transportCostUnit').value) || 0,
-                marketingPercentage: parseFloat(document.getElementById('marketingPercentage').value) || 0,
-                targetRevenue: parseFloat(document.getElementById('targetRevenue').value) || 0,
-                productName: document.getElementById('productName').value || 'Tu Producto',
-                priceVariation: parseFloat(document.getElementById('priceVariationInput')?.value) || 0,
-                costVariation: parseFloat(document.getElementById('costVariationInput')?.value) || 0,
+                salePrice: parseFloat(document.getElementById('salePrice').value.replace(',', '.')) || 0,
+                totalOrderCostDOP: parseFloat(document.getElementById('totalOrderCostDOP').value.replace(',', '.')) || 0,
+                courierCost: parseFloat(document.getElementById('courierCost').value.replace(',', '.')) || 0,
+                transportCostUnit: parseFloat(document.getElementById('transportCostUnit').value.replace(',', '.')) || 0,
+                marketingPercentage: parseFloat(document.getElementById('marketingPercentage').value.replace(',', '.')) || 0,
+                targetRevenue: parseFloat(document.getElementById('targetRevenue').value.replace(',', '.')) || 0,
+                productName: document.getElementById('productName').value,
+                priceVariation: parseFloat(document.getElementById('priceVariationInput')?.value.replace(',', '.')) || 0,
+                costVariation: parseFloat(document.getElementById('costVariationInput')?.value.replace(',', '.')) || 0,
             };
             
             manageSteps(inputs);
-            document.getElementById('productNameDisplay').textContent = inputs.productName;
+            document.getElementById('productNameDisplay').textContent = inputs.productName || 'Tu Producto';
 
             const resultsSection = document.getElementById('results-section');
             const execSummaryBtn = document.getElementById('execSummaryBtn');
@@ -415,6 +414,7 @@
             } else {
                 resultsSection.style.display = 'none';
                 execSummaryBtn.disabled = true;
+                if(document.getElementById('orderAnalysis')) renderAllSections(); // Renderiza para mostrar ceros si no hay datos
                 return;
             }
             
@@ -709,7 +709,6 @@
                 ["Margen Bruto", `${formatNumber(d.totalGrossMarginPercentage)}%`],
                 ["Margen Neto", `${formatNumber(d.netMarginTotalPercentage)}%`],
                 ["Retorno de Inversión (ROI)", `${formatNumber(d.roi)}%`],
-                ["Punto de Equilibrio", `${isFinite(d.breakEvenUnits) ? formatNumber(d.breakEvenUnits) : 'N/A'} unidades`],
             ];
 
             const headStyles = { fillColor: [13, 110, 253], textColor: [255,255,255] };
@@ -746,7 +745,6 @@
                 ["Margen Bruto (%)", `${formatNumber(d.totalGrossMarginPercentage)}%`],
                 ["Margen Neto (%)", `${formatNumber(d.netMarginTotalPercentage)}%`],
                 ["Retorno de Inversión (ROI)", `${formatNumber(d.roi)}%`],
-                ["Punto de Equilibrio (Unidades)", isFinite(d.breakEvenUnits) ? formatNumber(d.breakEvenUnits) : 'N/A'],
             ];
             const ws = XLSX.utils.aoa_to_sheet(ws_data);
             const wb = XLSX.utils.book_new();
@@ -777,22 +775,34 @@
             const step2 = document.getElementById('step-2'), step3 = document.getElementById('step-3');
             const progressBar = document.getElementById('progress-bar'), progressText = document.getElementById('progress-text');
             
-            step2.classList.add('hidden'); 
-            step3.classList.add('hidden');
-            progressBar.style.width = '0%'; 
-            progressText.textContent = 'Esperando Datos';
+            if (!totalUnits && !salePrice && !productName) {
+                step2.classList.add('hidden'); 
+                step3.classList.add('hidden');
+                progressBar.style.width = '0%'; 
+                progressText.textContent = 'Esperando Datos';
+                return;
+            }
 
             if (totalUnits > 0 && salePrice > 0 && productName) {
                 progressBar.style.width = '33%';
                 progressText.textContent = 'Paso 1 de 3';
                 step2.classList.remove('hidden');
+            } else {
+                 step2.classList.add('hidden'); 
+                 step3.classList.add('hidden');
+                 return;
             }
-            if (totalUnits > 0 && salePrice > 0 && productName && totalOrderCostDOP > 0) {
+
+            if (totalOrderCostDOP > 0) {
                 progressBar.style.width = '66%';
                 progressText.textContent = 'Paso 2 de 3';
                 step3.classList.remove('hidden');
+            } else {
+                step3.classList.add('hidden');
+                return;
             }
-             if (totalUnits > 0 && salePrice > 0 && productName && totalOrderCostDOP > 0 && targetRevenue > 0) {
+
+             if (targetRevenue > 0) {
                 progressBar.style.width = '100%';
                 progressText.textContent = 'Análisis Completo';
             }
