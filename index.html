@@ -336,7 +336,7 @@
                  <h2 class="text-2xl font-bold my-6" style="font-family: 'Orbitron', sans-serif;">Paso 2: Gastos del Pedido</h2>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div class="input-group"><label for="totalOrderCostDOP">Costo Total Producto</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="totalOrderCostDOP" value="" placeholder="Ej: 5.190"><i data-lucide="receipt" class="icon"></i></div></div>
-                    <div class="input-group"><label for="courierCost">Courier</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="courierCost" value="" placeholder="Ej: 1.000"><i data-lucide="truck" class="icon"></i></div></div>
+                    <div class="input-group"><label for="courierCost">Costo Total Courier</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="courierCost" value="" placeholder="Ej: 1.000"><i data-lucide="truck" class="icon"></i></div></div>
                     <div class="input-group"><label for="transportCostUnit">Transporte / Unid.</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="transportCostUnit" value="0" placeholder="Ej: 10"><i data-lucide="navigation" class="icon"></i></div></div>
                     <div class="input-group"><label for="marketingPercentage">Marketing (%)</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="marketingPercentage" value="0" placeholder="Ej: 4"><i data-lucide="megaphone" class="icon"></i></div></div>
                 </div>
@@ -528,20 +528,19 @@
         function renderKPIs() {
             const { totalSalesDOP, totalCostsDOP, totalNetProfitDOP, totalGrossMarginPercentage, netMarginTotalPercentage } = calculatedData;
             
-            const createKpiCard = (id, label, value, barPercent, barColorClass) => {
+            const createKpiCard = (id, label, value) => {
                 const kpiCard = document.getElementById(id);
                 kpiCard.innerHTML = `
                     <p class="metric-label">${label}</p>
                     <p class="metric-value text-2xl my-1">${value}</p>
-                    <div class="kpi-bar-bg"><div class="kpi-bar ${barColorClass}" style="width: ${barPercent}%"></div></div>
                 `;
             };
 
-            createKpiCard('kpi-sales', 'Ventas Totales', formatCurrency(totalSalesDOP), 100, 'gold');
-            createKpiCard('kpi-costs', 'Costos Totales', formatCurrency(totalCostsDOP), (totalCostsDOP/totalSalesDOP)*100, 'red');
-            createKpiCard('kpi-profit', 'Beneficio Neto', formatCurrency(totalNetProfitDOP), (totalNetProfitDOP/totalSalesDOP)*100, 'emerald');
-            createKpiCard('kpi-gross-margin', 'Margen Bruto', `${formatNumber(totalGrossMarginPercentage, 2)}%`, totalGrossMarginPercentage, 'gold');
-            createKpiCard('kpi-net-margin', 'Margen Neto', `${formatNumber(netMarginTotalPercentage, 2)}%`, netMarginTotalPercentage, 'emerald');
+            createKpiCard('kpi-sales', 'Ventas Totales', formatCurrency(totalSalesDOP));
+            createKpiCard('kpi-costs', 'Costos Totales', formatCurrency(totalCostsDOP));
+            createKpiCard('kpi-profit', 'Beneficio Neto', formatCurrency(totalNetProfitDOP));
+            createKpiCard('kpi-gross-margin', 'Margen Bruto', `${formatNumber(totalGrossMarginPercentage, 2)}%`);
+            createKpiCard('kpi-net-margin', 'Margen Neto', `${formatNumber(netMarginTotalPercentage, 2)}%`);
             
             document.getElementById('kpi-profit').querySelector('.metric-value').className = `metric-value text-2xl my-1 ${totalNetProfitDOP >= 0 ? 'positive' : 'negative'}`;
             document.getElementById('kpi-net-margin').querySelector('.metric-value').className = `metric-value text-2xl my-1 ${netMarginTotalPercentage >= 0 ? 'positive' : 'negative'}`;
@@ -977,9 +976,11 @@
             function formatInputAsNumber(event) {
                 const input = event.target;
                 let value = input.value;
-                const cursorPosition = input.selectionStart;
+                let cursorPosition = input.selectionStart;
+
+                const originalValue = value;
                 const originalLength = value.length;
-                
+
                 let numericValue = value.replace(/[^0-9]/g, '');
                 
                 if (numericValue === '') {
@@ -1003,11 +1004,14 @@
             inputsToFormat.forEach(id => {
                 const inputElement = document.getElementById(id);
                 if (inputElement) {
-                    inputElement.addEventListener('input', formatInputAsNumber);
+                    inputElement.addEventListener('input', (e) => {
+                        formatInputAsNumber(e);
+                        calculate();
+                    });
                 }
             });
 
-            document.querySelectorAll('#input-section input').forEach(input => input.addEventListener('input', calculate));
+            document.querySelectorAll('#input-section input[type="text"]:not([inputmode="numeric"])').forEach(input => input.addEventListener('input', calculate));
             
             const modal = document.getElementById('summaryModal');
             document.getElementById('execSummaryBtn').addEventListener('click', generateExecutiveSummary);
