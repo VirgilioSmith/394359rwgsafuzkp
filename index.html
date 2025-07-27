@@ -297,13 +297,6 @@
         .toggle-switch input:checked + .slider:before {
             transform: translateX(22px);
         }
-        
-        /* Estilos para KPIs con barras */
-        .kpi-bar-bg { flex-grow: 1; background-color: rgba(var(--accent-neon-blue-rgb), 0.1); border-radius: 3px; height: 6px; margin-top: 0.5rem; }
-        .kpi-bar { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(0.25, 0.8, 0.25, 1); }
-        .kpi-bar.gold { background: var(--accent-gold); }
-        .kpi-bar.red { background: var(--accent-red); }
-        .kpi-bar.emerald { background: var(--accent-emerald); }
     </style>
 </head>
 <body class="p-4 md:p-6 lg:p-8">
@@ -342,7 +335,7 @@
             <div id="step-2" class="step hidden">
                  <h2 class="text-2xl font-bold my-6" style="font-family: 'Orbitron', sans-serif;">Paso 2: Gastos del Pedido</h2>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                    <div class="input-group"><label for="totalOrderCostDOP">Costo Total Pedido</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="totalOrderCostDOP" value="" placeholder="Ej: 5.190"><i data-lucide="receipt" class="icon"></i></div></div>
+                    <div class="input-group"><label for="totalOrderCostDOP">Costo Total Producto</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="totalOrderCostDOP" value="" placeholder="Ej: 5.190"><i data-lucide="receipt" class="icon"></i></div></div>
                     <div class="input-group"><label for="courierCost">Courier</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="courierCost" value="" placeholder="Ej: 1.000"><i data-lucide="truck" class="icon"></i></div></div>
                     <div class="input-group"><label for="transportCostUnit">Transporte / Unid.</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="transportCostUnit" value="0" placeholder="Ej: 10"><i data-lucide="navigation" class="icon"></i></div></div>
                     <div class="input-group"><label for="marketingPercentage">Marketing (%)</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="marketingPercentage" value="0" placeholder="Ej: 4"><i data-lucide="megaphone" class="icon"></i></div></div>
@@ -987,20 +980,15 @@
                 const cursorPosition = input.selectionStart;
                 const originalLength = value.length;
                 
-                let numericValue = value.replace(/[^0-9,]/g, '').replace(/,/g, '.');
+                let numericValue = value.replace(/[^0-9]/g, '');
                 
                 if (numericValue === '') {
                     input.value = '';
+                    calculate();
                     return;
                 }
 
-                const parts = numericValue.split('.');
-                let integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                
-                let formattedValue = integerPart;
-                if (parts.length > 1) {
-                    formattedValue += ',' + parts[1];
-                }
+                const formattedValue = new Intl.NumberFormat('de-DE').format(numericValue);
                 
                 if (value !== formattedValue) {
                     input.value = formattedValue;
