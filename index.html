@@ -351,7 +351,7 @@
             <div id="step-3" class="step hidden">
                 <h2 class="text-2xl font-bold my-6" style="font-family: 'Orbitron', sans-serif;">Paso 3: Meta y Simulación</h2>
                  <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="input-group"><label for="targetRevenue">Meta de Ingresos</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="targetRevenue" value="" placeholder="Ej: 500.000"><i data-lucide="target" class="icon"></i></div></div>
+                    <div class="input-group"><label for="targetNetProfit">Meta de Beneficio Neto</label><div class="input-wrapper"><input type="text" inputmode="numeric" id="targetNetProfit" value="" placeholder="Ej: 400.000"><i data-lucide="target" class="icon"></i></div></div>
                 </div>
             </div>
         </div>
@@ -445,7 +445,7 @@
                 courierCost: parseFloat(deformatNumber(document.getElementById('courierCost').value)) || 0,
                 transportCostUnit: parseFloat(deformatNumber(document.getElementById('transportCostUnit').value)) || 0,
                 marketingPercentage: parseFloat(deformatNumber(document.getElementById('marketingPercentage').value)) || 0,
-                targetRevenue: parseFloat(deformatNumber(document.getElementById('targetRevenue').value)) || 0,
+                targetNetProfit: parseFloat(deformatNumber(document.getElementById('targetNetProfit').value)) || 0,
                 productName: document.getElementById('productName').value,
                 priceVariation: parseFloat(document.getElementById('priceVariationInput')?.value) || 0,
                 costVariation: parseFloat(document.getElementById('costVariationInput')?.value) || 0,
@@ -491,8 +491,18 @@
             c.variableCostPerUnit = c.productCostUnit + c.transportCostUnit + c.marketingCostUnit;
             c.contributionMargin = inputs.salePrice - c.variableCostPerUnit;
             c.breakEvenUnits = c.contributionMargin > 0 ? c.fixedCosts / c.contributionMargin : Infinity;
-            c.unitsForTargetRevenue = inputs.salePrice > 0 ? inputs.targetRevenue / inputs.salePrice : 0;
-            c.projectedNetProfit = (c.contributionMargin * c.unitsForTargetRevenue) - c.fixedCosts;
+            
+            // Lógica para Meta de Beneficio Neto
+            c.unitsForTargetProfit = c.contributionMargin > 0 ? (inputs.targetNetProfit + c.fixedCosts) / c.contributionMargin : Infinity;
+            c.revenueForTargetProfit = c.unitsForTargetProfit * inputs.salePrice;
+            
+            // Desglose de gastos para la meta
+            c.projectedProductCostForTarget = c.productCostUnit * c.unitsForTargetProfit;
+            c.projectedCourierCostForTarget = c.fixedCosts; // Courier es fijo
+            c.projectedTransportCostForTarget = c.transportCostUnit * c.unitsForTargetProfit;
+            c.projectedMarketingCostForTarget = c.revenueForTargetProfit * (inputs.marketingPercentage / 100);
+
+            // Lógica para simulación
             c.simulatedSalePrice = inputs.salePrice * (1 + inputs.priceVariation / 100);
             c.simulatedProductCostUnit = c.productCostUnit * (1 + inputs.costVariation / 100);
             c.unitsForSimulatedRevenue = c.simulatedSalePrice > 0 ? inputs.targetRevenue / c.simulatedSalePrice : 0;
@@ -655,33 +665,29 @@
         };
         
         function renderTargetPlan() {
-            const { targetRevenue, unitsForTargetRevenue, projectedNetProfit } = calculatedData;
+            const { targetNetProfit, unitsForTargetProfit, revenueForTargetProfit, projectedProductCostForTarget, projectedCourierCostForTarget, projectedTransportCostForTarget, projectedMarketingCostForTarget } = calculatedData;
             const createItem = (label, value, valClass = '') => `<div class="analysis-item"><p class="text-gray-400">${label}</p><p class="font-bold text-lg ${valClass}">${value}</p></div>`;
-            let html = `<h3 class="font-bold text-xl mb-4" style="font-family: 'Orbitron', sans-serif;">Plan para Meta de ${formatCurrency(targetRevenue)}</h3><div class="space-y-2 bg-black/20 p-4 rounded-lg">` + createItem('Unidades a Vender (Mes)', `${formatNumber(unitsForTargetRevenue, 0)}`, 'text-gold-300') + createItem('Beneficio Neto Estimado', `${formatCurrency(projectedNetProfit)}`, projectedNetProfit >= 0 ? 'positive' : 'negative') + `</div>`;
+            let html = `<h3 class="font-bold text-xl mb-4" style="font-family: 'Orbitron', sans-serif;">Plan para Meta de ${formatCurrency(targetNetProfit)}</h3>
+                        <div class="space-y-2 bg-black/20 p-4 rounded-lg">
+                            ${createItem('Unidades a Vender', `${formatNumber(unitsForTargetProfit, 0)}`, 'text-gold-300')}
+                            ${createItem('Ingresos Requeridos', `${formatCurrency(revenueForTargetProfit)}`)}
+                        </div>`;
             
-            html += `<h3 class="font-bold text-xl mt-8 mb-4" style="font-family: 'Orbitron', sans-serif;">Proyecciones a Futuro (con Meta)</h3>`;
-            html += `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">`;
-            const targetProjections = [{ period: '1 Mes', days: 30 }, { period: '3 Meses', days: 90 }, { period: '1 Año', days: 365 }];
-            targetProjections.forEach(p => {
-                const pUnits = (unitsForTargetRevenue / 30) * p.days;
-                const pRevenue = (targetRevenue / 30) * p.days;
-                const pProfit = (projectedNetProfit / 30) * p.days;
-                html += `<div class="bg-black/20 p-4 rounded-lg">
-                    <p class="font-bold text-lg" style="color: var(--accent-neon-blue);">${p.period}</p>
-                    <p class="text-sm text-gray-400">${formatNumber(pUnits, 0)} Unidades</p>
-                    <p class="text-sm text-gray-400">Ingresos: ${formatCurrency(pRevenue)}</p>
-                    <p class="text-sm font-semibold ${pProfit >= 0 ? 'positive' : 'negative'}">Beneficio: ${formatCurrency(pProfit)}</p>
-                    ${createPacingHTML(pUnits, p.days)}
-                </div>`;
-            });
-            html += `</div>`;
+            html += `<h4 class="font-semibold text-gray-300 mt-6 mb-2">Desglose de Gastos Proyectados</h4>
+                     <div class="space-y-2 bg-black/20 p-4 rounded-lg">
+                        ${createItem('Costo de Productos', formatCurrency(projectedProductCostForTarget))}
+                        ${createItem('Costo de Courier', formatCurrency(projectedCourierCostForTarget))}
+                        ${createItem('Costo de Transporte', formatCurrency(projectedTransportCostForTarget))}
+                        ${createItem('Costo de Marketing', formatCurrency(projectedMarketingCostForTarget))}
+                     </div>`;
+
             document.getElementById('revenueProjectionPlan').innerHTML = html;
         }
 
         function renderRiskAnalysis() {
-            const { priceVariation, costVariation, targetRevenue, unitsForSimulatedRevenue, simulatedProjectedProfit, simulatedProjectedProductCost, simulatedProjectedTransportCost, simulatedProjectedMarketingCost, simulatedProjectedTotalCost, courierCost } = calculatedData;
+            const { priceVariation, costVariation, targetNetProfit, unitsForSimulatedRevenue, simulatedProjectedProfit, simulatedProjectedProductCost, simulatedProjectedTransportCost, simulatedProjectedMarketingCost, simulatedProjectedTotalCost, courierCost } = calculatedData;
             const createItem = (label, value, valClass = '', isSub = false) => `<div class="analysis-item ${isSub ? 'pl-4' : ''}"><p class="text-gray-400">${label}</p><p class="font-bold ${isSub ? 'text-base' : 'text-lg'} ${valClass}">${value}</p></div>`;
-            let html = `<h3 class="font-bold text-xl mb-4" style="font-family: 'Orbitron', sans-serif;">Análisis de Sensibilidad</h3><div class="grid grid-cols-2 gap-4 mb-6"><div class="input-group"><label for="priceVariationInput">Variación Precio (%)</label><div class="input-wrapper"><input type="number" id="priceVariationInput" value="${priceVariation}" placeholder="Ej: -5"><i data-lucide="trending-up" class="icon"></i></div></div><div class="input-group"><label for="costVariationInput">Variación Costo (%)</label><div class="input-wrapper"><input type="number" id="costVariationInput" value="${costVariation}" placeholder="Ej: 10"><i data-lucide="trending-down" class="icon"></i></div></div></div><h4 class="font-semibold text-gray-300 mb-2">Resultados de Simulación (para la meta de ${formatCurrency(targetRevenue)})</h4><div class="space-y-2 bg-black/20 p-4 rounded-lg">` + createItem('Nuevas Unidades a Vender', `${formatNumber(unitsForSimulatedRevenue, 0)}`, 'text-gold-300') + createItem('Nuevo Beneficio Estimado', `${formatCurrency(simulatedProjectedProfit)}`, simulatedProjectedProfit >= 0 ? 'positive' : 'negative') + `</div><p class="font-semibold text-gray-400 text-sm mt-4 mb-1">Desglose de Gastos (Simulación):</p>` + createItem('Costo de Productos', formatCurrency(simulatedProjectedProductCost), '', true) + createItem('Costo de Courier', formatCurrency(courierCost), '', true) + createItem('Costo de Transporte', formatCurrency(simulatedProjectedTransportCost), '', true) + createItem('Costo de Marketing', formatCurrency(simulatedProjectedMarketingCost), '', true) + createItem('Costo Total', formatCurrency(simulatedProjectedTotalCost), 'text-amber-400');
+            let html = `<h3 class="font-bold text-xl mb-4" style="font-family: 'Orbitron', sans-serif;">Análisis de Sensibilidad</h3><div class="grid grid-cols-2 gap-4 mb-6"><div class="input-group"><label for="priceVariationInput">Variación Precio (%)</label><div class="input-wrapper"><input type="number" id="priceVariationInput" value="${priceVariation}" placeholder="Ej: -5"><i data-lucide="trending-up" class="icon"></i></div></div><div class="input-group"><label for="costVariationInput">Variación Costo (%)</label><div class="input-wrapper"><input type="number" id="costVariationInput" value="${costVariation}" placeholder="Ej: 10"><i data-lucide="trending-down" class="icon"></i></div></div></div><h4 class="font-semibold text-gray-300 mb-2">Resultados de Simulación (para la meta de ${formatCurrency(targetNetProfit)})</h4><div class="space-y-2 bg-black/20 p-4 rounded-lg">` + createItem('Nuevas Unidades a Vender', `${formatNumber(unitsForSimulatedRevenue, 0)}`, 'text-gold-300') + createItem('Nuevo Beneficio Estimado', `${formatCurrency(simulatedProjectedProfit)}`, simulatedProjectedProfit >= 0 ? 'positive' : 'negative') + `</div><p class="font-semibold text-gray-400 text-sm mt-4 mb-1">Desglose de Gastos (Simulación):</p>` + createItem('Costo de Productos', formatCurrency(simulatedProjectedProductCost), '', true) + createItem('Costo de Courier', formatCurrency(courierCost), '', true) + createItem('Costo de Transporte', formatCurrency(simulatedProjectedTransportCost), '', true) + createItem('Costo de Marketing', formatCurrency(simulatedProjectedMarketingCost), '', true) + createItem('Costo Total', formatCurrency(simulatedProjectedTotalCost), 'text-amber-400');
             document.getElementById('riskAnalysis').innerHTML = html;
         }
         
@@ -827,7 +833,7 @@
         }
 
         function manageSteps(inputs) {
-            const { totalUnits, salePrice, totalOrderCostDOP, productName, targetRevenue } = inputs;
+            const { totalUnits, salePrice, totalOrderCostDOP, productName, targetNetProfit } = inputs;
             const step2 = document.getElementById('step-2'), step3 = document.getElementById('step-3');
             const progressBar = document.getElementById('progress-bar'), progressText = document.getElementById('progress-text');
             
@@ -860,7 +866,7 @@
                 return;
             }
 
-             if (targetRevenue > 0) {
+             if (targetNetProfit > 0) {
                 progressBar.style.width = '100%';
                 progressText.textContent = 'Análisis Completo';
             }
@@ -940,14 +946,20 @@
                 const cursorPosition = input.selectionStart;
                 const originalLength = value.length;
                 
-                let numericValue = value.replace(/[^0-9]/g, '');
+                let numericValue = value.replace(/[^0-9,]/g, '').replace(/,/g, '.');
                 
                 if (numericValue === '') {
                     input.value = '';
                     return;
                 }
 
-                const formattedValue = new Intl.NumberFormat('en-US').format(numericValue);
+                const parts = numericValue.split('.');
+                let integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                
+                let formattedValue = integerPart;
+                if (parts.length > 1) {
+                    formattedValue += ',' + parts[1];
+                }
                 
                 if (value !== formattedValue) {
                     input.value = formattedValue;
@@ -958,7 +970,7 @@
                 }
             }
 
-            const inputsToFormat = ['totalUnits', 'salePrice', 'totalOrderCostDOP', 'courierCost', 'transportCostUnit', 'targetRevenue'];
+            const inputsToFormat = ['totalUnits', 'salePrice', 'totalOrderCostDOP', 'courierCost', 'transportCostUnit', 'targetNetProfit'];
             inputsToFormat.forEach(id => {
                 const inputElement = document.getElementById(id);
                 if (inputElement) {
